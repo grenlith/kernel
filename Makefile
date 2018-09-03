@@ -10,12 +10,12 @@ asm:
 	nasm -f elf32 $(SRCDIR)/kernel.asm -o $(ODIR)/kasm.o
 
 c:
-	gcc -m32 -c $(SRCDIR)/kernel.c -o $(ODIR)/kc.o
+	gcc -fno-stack-protector -m32 -c $(SRCDIR)/kernel.c -o $(ODIR)/kc.o
 
 link: 
 	ld -m elf_i386 -T link.ld -o kernel $(ODIR)/kasm.o $(ODIR)/kc.o
 
-directories: ${ODIR}
+directories: $(ODIR)
 
 $(ODIR):
 	$(MKDIR_P) $(ODIR)
