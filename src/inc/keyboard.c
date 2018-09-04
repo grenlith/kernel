@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "keyboard_map.h"
 
 #define KEYBOARD_DATA_PORT 0x60
@@ -8,29 +9,29 @@
 #define ENTER_KEY 0x1c
 #define BACKSPACE_KEY 0x0e
 
-extern unsigned char keyboard_map[128];
+extern uint8_t keyboard_map[128];
 extern void keyboard_handler(void);
-extern char read_port(unsigned short port);
-extern void write_port(unsigned short port, unsigned char data);
-extern void load_idt(unsigned long *idt_ptr);
+extern char read_port(uint16_t port);
+extern void write_port(uint16_t port, uint8_t data);
+extern void load_idt(uintptr_t *idt_ptr);
 
 struct IDT_entry {
-    unsigned short int offset_lowerbits;
-    unsigned short int selector;
-    unsigned char zero;
-    unsigned char type_attr;
-    unsigned short int offset_higherbits;
+    uint16_t offset_lowerbits;
+    uint16_t selector;
+    uint8_t zero;
+    uint8_t type_attr;
+    uint16_t offset_higherbits;
 };
 
 struct IDT_entry IDT[IDT_SIZE];
 
 void idt_init(void) {
-    unsigned long keyboard_address;
-    unsigned long idt_address;
-    unsigned long idt_ptr[2];
+    uint32_t keyboard_address;
+    uint32_t idt_address;
+    uint32_t idt_ptr[2];
 
     //populate idt entry of kbd interrupt
-    keyboard_address = (unsigned long)keyboard_handler;
+    keyboard_address = (uintptr_t)keyboard_handler;
     IDT[0x21].offset_lowerbits = keyboard_address & 0xffff;
     IDT[0x21].selector = 0x08;  // kernel code segment offset
     IDT[0x21].zero = 0;
@@ -55,7 +56,7 @@ void idt_init(void) {
     write_port(0xA1, 0xff);
 
     //fill idt descriptor
-    idt_address = (unsigned long)IDT;
+    idt_address = (uintptr_t)IDT;
     idt_ptr[0] = (sizeof (struct IDT_entry) * IDT_SIZE) + ((idt_address & 0xffff) << 16);
     idt_ptr[1] = idt_address >> 16;
 
@@ -67,8 +68,8 @@ void kb_init(void) {
 }
 
 void keyboard_handler_main(void) {
-    unsigned char status;
-    char keycode;
+    uint8_t status;
+    int8_t keycode;
 
     write_port(0x20, 0x20); //write EOI
 

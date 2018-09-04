@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #define LINES 25
 #define COLUMNS 80
 #define BYTES 2
@@ -6,14 +8,16 @@
 #define BGCOLOR 0x00
 #define FONTCOLOR 0x07
 #define HEADERFONTCOLOR 0x0D
+#define SCROLLBACK SCREENSIZE - (COLUMNS * 4)
 
 const char *banner = "                                                                          grenos";
 
-unsigned int current_loc = 0;
+uint16_t current_loc = 0;
 char *vidptr = (char*)0xb8000;
 
+//TODO: check for screen buffer overflow prior to print
 void kprint(const char *str) {
-    unsigned int i = 0;
+    uint16_t i = 0;
     while(str[i] != '\0') {
         vidptr[current_loc++] = str[i++];
         if(current_loc <= COLUMNS * 2)
@@ -25,7 +29,7 @@ void kprint(const char *str) {
 }
 
 void clear_screen(void) {
-    unsigned int i = 0;
+    uint16_t i = 0;
     while(i < SCREENSIZE) {
         vidptr[i++] = BLOCK;
         vidptr[i++] = BGCOLOR;
@@ -36,30 +40,27 @@ void clear_screen(void) {
 }
 
 void kprint_bulk(char buffer[]) {
-    unsigned int i = 0;
-    while(i < SCREENSIZE - (COLUMNS * 2 * 2)) {
+    for(uint16_t i = 0; i < SCROLLBACK; i++) {
         vidptr[current_loc++] = buffer[i];
-        i = i + 1;
     }
+
     return;
 }
 
 void scroll_screen(void) {
-    unsigned int scr = COLUMNS * 2 * 2;
-    char buffer[SCREENSIZE - scr];
-    unsigned int i = 0;
-    while(i < SCREENSIZE - scr) {
-        buffer[i] = vidptr[i + (COLUMNS * 2 * 2)];
-        i = i + 1;
+    char buffer[SCROLLBACK];
+
+    for(uint16_t i = 0; i < SCROLLBACK; i++) {
+        buffer[i] = vidptr[i + (COLUMNS * 4)];
     }
-    i = 0;
+    
     clear_screen();
     kprint_bulk(buffer);
     return;
 }
 
 void kprint_newline(void) {
-    unsigned int line_size = BYTES * COLUMNS;
+    uint16_t line_size = BYTES * COLUMNS;
     current_loc = current_loc + (line_size - current_loc % (line_size));
     if(current_loc >= SCREENSIZE) {
         scroll_screen();

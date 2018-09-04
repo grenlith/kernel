@@ -1,4 +1,4 @@
-;;stub.asm
+;;kernel.asm
 bits 32                     ;nasm directive (32bit)
 section .text
     ;mutiboot spec
