@@ -1,22 +1,13 @@
 #include <stdint.h>
-
-#define LINES 25
-#define COLUMNS 80
-#define BYTES 2
-#define SCREENSIZE LINES * COLUMNS * BYTES
-#define BLOCK 219
-#define BGCOLOR 0x00
-#define FONTCOLOR 0x07
-#define HEADERFONTCOLOR 0x0D
-#define SCROLLBACK SCREENSIZE - (COLUMNS * 4)
-
-const char *banner = "                                                                          grenos";
+#include "screen.h"
 
 uint16_t current_loc = 0;
-char *vidptr = (char*)0xb8000;
+uintptr_t* vidptr = (uintptr_t* )0xb8000;
+
+const char* banner = "                                                                          grenos";
 
 //TODO: check for screen buffer overflow prior to print
-void kprint(const char *str) {
+void kprint(const char* str) {
     uint16_t i = 0;
     while(str[i] != '\0') {
         vidptr[current_loc++] = str[i++];
@@ -79,4 +70,12 @@ void kprint_backspace(void) {
         current_loc = 0;
     }
     return;
+}
+
+uint16_t get_current_loc(void) {
+    return current_loc;
+}
+
+uintptr_t* get_vidptr(void) {
+    return vidptr;
 }

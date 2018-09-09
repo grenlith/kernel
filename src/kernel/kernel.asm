@@ -13,8 +13,8 @@ global read_port
 global write_port
 global load_idt
 
-extern kmain                ;defined in kernel.c
-extern keyboard_handler_main
+extern kmain                ;kernel.c
+extern keyboard_handler_main;keyboard.c
 
 read_port:
     mov edx, [esp + 4]

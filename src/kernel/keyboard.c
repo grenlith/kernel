@@ -1,31 +1,12 @@
 #include <stdint.h>
+#include "keyboard.h"
 #include "keyboard_map.h"
-
-#define KEYBOARD_DATA_PORT 0x60
-#define KEYBOARD_STATUS_PORT 0x64
-#define IDT_SIZE 256
-#define INTERRUPT_GATE 0x8e
-#define KERNEL_CODE_SEGMENT_OFFSET 0x08
-#define ENTER_KEY 0x1c
-#define BACKSPACE_KEY 0x0e
-
-extern uint8_t keyboard_map[128];
-extern void keyboard_handler(void);
-extern char read_port(uint16_t port);
-extern void write_port(uint16_t port, uint8_t data);
-extern void load_idt(uintptr_t *idt_ptr);
-
-struct IDT_entry {
-    uint16_t offset_lowerbits;
-    uint16_t selector;
-    uint8_t zero;
-    uint8_t type_attr;
-    uint16_t offset_higherbits;
-};
+#include "screen.h"
 
 struct IDT_entry IDT[IDT_SIZE];
 
 void idt_init(void) {
+
     uint32_t keyboard_address;
     uint32_t idt_address;
     uint32_t idt_ptr[2];
@@ -92,7 +73,6 @@ void keyboard_handler_main(void) {
             return;
         }
 
-        vidptr[current_loc++] = keyboard_map[keycode];
-        vidptr[current_loc++] = 0x07;
+        kprint(&keyboard_map[keycode]);
     }
 }

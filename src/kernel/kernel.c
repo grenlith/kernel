@@ -1,5 +1,5 @@
-#include "inc/screen.c"
-#include "inc/keyboard.c"
+#include "screen.h"
+#include "keyboard.h"
 
 void kmain(void) {
     
