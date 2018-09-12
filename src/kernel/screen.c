@@ -1,48 +1,60 @@
+#include <stddef.h>
 #include <stdint.h>
 #include "screen.h"
 
 uint16_t current_loc = 0;
-uintptr_t* vidptr = (uintptr_t* )0xb8000;
+termchar_t* vidptr = (termchar_t* )0xb8000;
 
 const char* banner = "                                                                          grenos";
+color_t default_colors = {.bg = color_black, .fg = color_lgray};
 
-//TODO: check for screen buffer overflow prior to print
 void kprint(const char* str) {
-    uint16_t i = 0;
-    while(str[i] != '\0') {
-        vidptr[current_loc++] = str[i++];
-        if(current_loc <= COLUMNS * 2)
-            vidptr[current_loc++] = HEADERFONTCOLOR;
-        else
-            vidptr[current_loc++] = FONTCOLOR;
+    for(ptrdiff_t i = 0; str[i] != '\0'; i++) {
+        termchar_t value = {.code = str[i]};
+        
+        if(current_loc < COLUMNS) {
+            value.colors.bg = color_black;
+            value.colors.fg = color_lmagenta;
+        }   
+        else {
+            value.colors = default_colors;
+        }
+
+        vidptr[current_loc++] = value;
     }
+    
     return;
 }
 
 void clear_screen(void) {
-    uint16_t i = 0;
-    while(i < SCREENSIZE) {
-        vidptr[i++] = BLOCK;
-        vidptr[i++] = BGCOLOR;
+    termchar_t value = {
+        .code = BLOCK, 
+        .colors.bg = default_colors.bg,
+        .colors.fg = default_colors.bg
+    };
+
+    for(ptrdiff_t i = 0; i < SCREENSIZE; i++) {
+        vidptr[i] = value;
     }
+
     current_loc = 0;
     kprint(banner);
+
     return;
 }
 
-void kprint_bulk(char buffer[]) {
-    for(uint16_t i = 0; i < SCROLLBACK; i++) {
+void kprint_bulk(termchar_t buffer[]) {
+    for(ptrdiff_t i = 0; i < SCROLLBACK; i++) {
         vidptr[current_loc++] = buffer[i];
     }
-
     return;
 }
 
 void scroll_screen(void) {
-    char buffer[SCROLLBACK];
+    termchar_t buffer[SCROLLBACK];
 
-    for(uint16_t i = 0; i < SCROLLBACK; i++) {
-        buffer[i] = vidptr[i + (COLUMNS * 4)];
+    for(ptrdiff_t i = 0; i < SCROLLBACK; i++) {
+        buffer[i] = vidptr[i + (COLUMNS * 2)];
     }
     
     clear_screen();
@@ -51,31 +63,30 @@ void scroll_screen(void) {
 }
 
 void kprint_newline(void) {
-    uint16_t line_size = BYTES * COLUMNS;
-    current_loc = current_loc + (line_size - current_loc % (line_size));
+    current_loc = current_loc + (COLUMNS - current_loc % (COLUMNS));
+
     if(current_loc >= SCREENSIZE) {
         scroll_screen();
     }
+
     return;
 }
 
 void kprint_backspace(void) {
-    if(current_loc == 160)
+    if(current_loc <= 80)
         return;
-    current_loc = current_loc - 2;
-    vidptr[current_loc++] = BLOCK;
-    vidptr[current_loc++] = BGCOLOR;
-    current_loc = current_loc - 2;
+
+    termchar_t value = {
+        .code = BLOCK,
+        .colors.bg = default_colors.bg,
+        .colors.fg = default_colors.bg
+    };
+    current_loc = current_loc - 1;
+    vidptr[current_loc++] = value;
+    current_loc = current_loc - 1;
+
     if(current_loc > SCREENSIZE) {
         current_loc = 0;
     }
     return;
-}
-
-uint16_t get_current_loc(void) {
-    return current_loc;
-}
-
-uintptr_t* get_vidptr(void) {
-    return vidptr;
 }

@@ -4,6 +4,7 @@
 #include "screen.h"
 
 struct IDT_entry IDT[IDT_SIZE];
+char print_char[2];
 
 void idt_init(void) {
 
@@ -73,6 +74,8 @@ void keyboard_handler_main(void) {
             return;
         }
 
-        kprint(&keyboard_map[keycode]);
+        print_char[0] = keyboard_map[keycode];
+        print_char[1] = '\0';
+        kprint(print_char);
     }
 }

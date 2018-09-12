@@ -1,7 +1,7 @@
 SRCDIR=src
 ODIR=obj
 CC=gcc
-CFLAGS=-Wall -fno-stack-protector -m32 -std=gnu11 -c -O3
+CFLAGS=-Wall -fno-stack-protector -m32 -std=gnu11 -c -g
 MKDIR_P=mkdir -p
 
 .PHONY: directories
