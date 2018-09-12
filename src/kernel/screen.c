@@ -27,11 +27,9 @@ void kprint(const char* str) {
 }
 
 void clear_screen(void) {
-    termchar_t value = {
-        .code = BLOCK, 
-        .colors.bg = default_colors.bg,
-        .colors.fg = default_colors.bg
-    };
+    termchar_t value = {.code = BLOCK, 
+                        .colors.bg = default_colors.bg, 
+                        .colors.fg = default_colors.bg};
 
     for(ptrdiff_t i = 0; i < SCREENSIZE; i++) {
         vidptr[i] = value;
@@ -43,8 +41,8 @@ void clear_screen(void) {
     return;
 }
 
-void kprint_bulk(termchar_t buffer[]) {
-    for(ptrdiff_t i = 0; i < SCROLLBACK; i++) {
+void kprint_bulk(termchar_t buffer[], size_t buffer_len) {
+    for(ptrdiff_t i = 0; (i < buffer_len) && buffer_len < SCREENSIZE; i++) {
         vidptr[current_loc++] = buffer[i];
     }
     return;
@@ -52,13 +50,28 @@ void kprint_bulk(termchar_t buffer[]) {
 
 void scroll_screen(void) {
     termchar_t buffer[SCROLLBACK];
+    termchar_t blank = {.code = BLOCK, 
+                        .colors.fg = default_colors.bg, 
+                        .colors.bg = default_colors.bg};
 
+    //fill up our temp buffer
     for(ptrdiff_t i = 0; i < SCROLLBACK; i++) {
-        buffer[i] = vidptr[i + (COLUMNS * 2)];
+        buffer[i] = vidptr[i + (COLUMNS * 2)]; //x2 because header+top line
     }
+
+    current_loc = COLUMNS;
+
+    //overwrite the video buffer with our temp buffer
+    for(ptrdiff_t i = 0; i < SCROLLBACK; i++) {
+        vidptr[current_loc++] = buffer[i];
+    }
+    //overwrite the last line with blanks
+    for(ptrdiff_t i = 0; i < COLUMNS; i++) {
+        vidptr[current_loc++] = blank;
+    }
+
+    current_loc = (COLUMNS * (LINES - 1));
     
-    clear_screen();
-    kprint_bulk(buffer);
     return;
 }
 
